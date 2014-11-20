@@ -36,4 +36,5 @@ public abstract class Animat {
     }
     public abstract void collideWithAnimat( Animat other );
     public abstract void control( int iteration, World x );
+    public abstract float[] getGenomeData();
 }

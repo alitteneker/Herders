@@ -31,9 +31,10 @@ public class WolfNeuralNetwork {
     public float[][] weights_level_1;
     public float[][] weights_level_2;
     public float[] motors;
-    public static final float node_threshold = 1;
+    public static final float node_threshold = 0.5f;
     int num_hidden_nodes = 20;
     Wolf parent;
+
     public WolfNeuralNetwork(Wolf par, Genome gnome) {
         parent = par;
         motors = new float[3];
@@ -45,9 +46,11 @@ public class WolfNeuralNetwork {
         int i, j;
         
         // calculate hidden values
-        if( sensor_data.length != weights_level_1[i].length )
+        if( num_hidden_nodes != weights_level_1.length )
             return;
         for( i = 0; i < weights_level_1.length; ++i ) {
+            if( sensor_data.length != weights_level_1[i].length )
+                return;
             for( j = 0; j < weights_level_1[i].length; ++j )
                 hidden[i] += weights_level_1[i][j] * sensor_data[j];
             if( hidden[i] < node_threshold )
@@ -55,16 +58,44 @@ public class WolfNeuralNetwork {
         }
         
         // calculate motors from hidden
+        if( motors.length != weights_level_2.length )
+            return;
         for( i = 0; i < weights_level_2.length; ++i ) {
-            if( motors.length != weights_level_2[i].length )
+            motors[i] = 0;
+            if( num_hidden_nodes != weights_level_2[i].length )
                 return;
             for( j = 0; j < weights_level_2[i].length; ++j )
                 motors[i] += weights_level_2[i][j] * hidden[j];
         }
     }
-    public void setWeightsFromGenome( Genome gnome ) {
-        
+    
+    public int getWeightCount() {
+        return num_hidden_nodes * ( num_sensor_vals + motors.length );
     }
+
+    public void setWeightsFromGenome( Genome gnome ) {
+        weights_level_1 = new float[num_hidden_nodes][num_sensor_vals];
+        weights_level_2 = new float[motors.length][num_hidden_nodes];
+        for( int i = 0; i < gnome.data.length; ++i ) {
+            if( i < num_hidden_nodes * num_sensor_vals )
+                weights_level_1[ i / num_hidden_nodes ][ i % num_hidden_nodes ] = gnome.data[i];
+            else
+                weights_level_2[] = gnome.data[i];
+        }
+    }
+
+    public float[] getGenomeData() {
+        int i, j, ind = 0, count = getWeightCount();
+        float[] ret = new float[count];
+        for( i = 0; i < weights_level_1.length; ++i )
+            for( j = 0; j < weights_level_1[i].length; ++j)
+                ret[ind++] = weights_level_1[i][j];
+        for( i = 0; i < weights_level_2.length; ++i )
+            for( j = 0; j < weights_level_2[i].length; ++j)
+                ret[ind++] = weights_level_2[i][j];
+        return ret;
+    }
+
     public float[] getSensorData( World world ) {
         float[] ret = new float[num_sensor_vals];
         int i, j, ind = 0;

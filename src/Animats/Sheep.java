@@ -31,4 +31,8 @@ public class Sheep extends Animat {
         }
         return ret;
     }
+
+    public float[] getGenomeData() {
+        return null;
+    }
 }

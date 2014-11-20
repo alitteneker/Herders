@@ -75,4 +75,8 @@ public class Wolf extends Animat {
         else
             return d_bad_bite_energy;
     }
+
+    public float[] getGenomeData() {
+        return NN.getGenomeData();
+    }
 }

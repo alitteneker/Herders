@@ -19,6 +19,15 @@ public class Util {
             val = 1f / val;
         return val;
     }
+    public static float min(float a, float b) {
+        return a > b ? b : a;
+    }
+    public static float max(float a, float b) {
+        return a > b ? a : b;
+    }
+    public static float abs(float a) {
+        return a < 0 ? -a : a;
+    }
     public static float sqrt(float val) {
         return (float)Math.sqrt(val);
     }
