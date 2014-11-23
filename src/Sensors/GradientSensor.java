@@ -18,10 +18,11 @@ public class GradientSensor extends Sensor {
     }
     public float[] sense(Animat ind, World world) {
         float[] results = new float[num_results];
-        results[0] = measureAt( ind.pos_x - ind.radius, ind.pos_y, ind, world );
-        results[1] = measureAt( ind.pos_x + ind.radius, ind.pos_y, ind, world );
-        results[2] = measureAt( ind.pos_x, ind.pos_y - ind.radius, ind, world );
-        results[3] = measureAt( ind.pos_x, ind.pos_y + ind.radius, ind, world );
+        float x = ind.position.getX(), y = ind.position.getY(), radius = ind.radius;
+        results[0] = measureAt( x - radius, y,          ind, world );
+        results[1] = measureAt( x + radius, y,          ind, world );
+        results[2] = measureAt( x,          y - radius, ind, world );
+        results[3] = measureAt( x,          y + radius, ind, world );
         return results;
     }
     protected float measureAt(float x, float y, Animat ind, World world ) {
@@ -33,13 +34,13 @@ public class GradientSensor extends Sensor {
                     continue;
                 if( ( check instanceof Sheep && ( type == TYPE_SHEEP || type == TYPE_CARCASS ) && ( type == TYPE_SHEEP ) == check.alive )
                         || ( check instanceof Wolf && type == TYPE_WOLVES ) )
-                    ret += Util.invert( Util.distance(x, y, check.pos_x, check.pos_y) );
+                    ret += Util.invert( Util.distance(x, y, check.position.getX(), check.position.getY()) );
             }
         }
         else if( type == TYPE_OBSTACLES )
             ret = Util.distance(x, y) / world.radius;
         else if( type == TYPE_MARSH )
-            ret = Util.invert( Util.distance(x, y, world.marsh_pos_x, world.marsh_pos_y) );
+            ret = Util.invert( Util.distance(x, y, world.marsh_position.getX(), world.marsh_position.getY()) );
 
         return ret;
     }

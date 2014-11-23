@@ -74,13 +74,14 @@ public class WolfNeuralNetwork {
     }
 
     public void setWeightsFromGenome( Genome gnome ) {
+        int thresh = num_hidden_nodes * num_sensor_vals;
         weights_level_1 = new float[num_hidden_nodes][num_sensor_vals];
         weights_level_2 = new float[motors.length][num_hidden_nodes];
         for( int i = 0; i < gnome.data.length; ++i ) {
-            if( i < num_hidden_nodes * num_sensor_vals )
+            if( i < thresh )
                 weights_level_1[ i / num_hidden_nodes ][ i % num_hidden_nodes ] = gnome.data[i];
             else
-                weights_level_2[] = gnome.data[i];
+                weights_level_2[ ( i - thresh ) / motors.length ][ ( i - thresh ) % motors.length ] = gnome.data[i];
         }
     }
 

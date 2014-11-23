@@ -10,61 +10,141 @@ public class World {
     PApplet applet;
 
     public ArrayList<Animat> animats = new ArrayList<Animat>();
-    public float radius = 500;
-    public float marsh_pos_x = 0, marsh_pos_y = 250, marsh_radius = 25;
+    public ThreadGroup tg;
+    public ArrayList<ThreadSplitter> threads = new ArrayList<ThreadSplitter>();
+    public float radius = 500, marsh_radius = 25;
+    public Vector2f marsh_position = new Vector2f( 0, 250 );
+    public int iteration;
+    public float timestep;
 
     public World( PApplet applet ) {
         this.applet = applet;
+        buildThreads();
         initialize();
     }
-    public void initialize() {
-        // add some sheep and wolves
-        // need to be positioned so that they are not colliding
+    public void buildThreads() {
+        tg = new ThreadGroup( "ThreadSplitters" );
+        final int processors = Runtime.getRuntime().availableProcessors();
+        for ( int i = 0; i < processors; ++i )
+            threads.add( new ThreadSplitter( this, tg, "TS"+i) );
     }
-    public int countAliveWolves() {
+    public void cleanThreads() {
+        // go through the animats, count the non-decomposed, and move the decomposed to the end of the list
+        // use the range of viable animats to set the min/maxes of each thread (avoids having to deal with duplicates)
+    }
+    public void runThreads( int mode ) {
+        final int processors = Runtime.getRuntime().availableProcessors();
+        for( int i = 0; i < threads.size(); ) {
+            if( tg.activeCount() < processors ) {
+                ThreadSplitter th = threads.get( i++ );
+                th.setMode(mode);
+                th.start();
+            }
+            else
+                try { Thread.sleep(100); }
+                    catch (InterruptedException e) { e.printStackTrace(); }
+        }
+        while( tg.activeCount() > 0 ) {
+            try { Thread.sleep(100); } 
+                catch (InterruptedException e) { e.printStackTrace(); }
+        }
+    }
+    public void initialize() {
+        // position animats so that they are not colliding
+    }
+    public int countAlive( boolean justwolves ) {
         int ret = 0;
-        for( int i = 0; i < animats.size(); ++i )
-            if( animats.get(i) instanceof Wolf && animats.get(i).alive )
+        for( int i = 0; i < animats.size(); ++i ) {
+            Animat a = animats.get(i); 
+            if( a.alive && ( !justwolves || ( justwolves && a instanceof Wolf ) ) )
                 ++ret;
+        }
         return ret;
     }
     public void run() {
+        iteration = 0;
+        timestep = 1;
 
-        int iteration = 0, i, j, size = animats.size();
-        float dist, radius_diff, diff_x, diff_y;
-
-        while( countAliveWolves() > 0 ) {
+        while( countAlive(true) > 0 ) {
             iteration++;
 
-            // let all animats run their control logic
-            // TODO: multithread?
-            for( i = 0; i < size; ++i ) {
+            cleanThreads();
+            runThreads(ThreadSplitter.MODE_CONTROL);
+            runThreads(ThreadSplitter.MODE_MOVE);
+            runThreads(ThreadSplitter.MODE_COLLIDE);
+            draw();
+        }
+    }
+    
+    public void draw() {
+        // can't multithread this bit due to drawing limitations
+        int size = animats.size();
+        for( int i = 0; i < size; ++i ) {
+            Animat a = animats.get(i);
+            if( !a.decomposed )
+                a.draw(applet);
+        }
+    }
+    
+    class ThreadSplitter extends Thread {
+        World world;
+        static final int MODE_CONTROL = 1, MODE_COLLIDE = 2, MODE_MOVE = 3;
+        int mode;
+        int minIndex, maxIndex;
+        
+        public ThreadSplitter(World world, ThreadGroup group, String name) {
+            super( group, name );
+        }
+        public void setMode(int set) {
+            mode = set;
+        }
+        public void run() {
+            if( mode == MODE_CONTROL )
+                control( world.iteration, world.timestep );
+            if( mode == MODE_MOVE )
+                move( world.timestep );
+            if( mode == MODE_COLLIDE )
+                checkForCollisions();
+        }
+        
+        public void control( int iteration, float timestep ) {
+            for( int i = minIndex; i < maxIndex; ++i ) {
                 Animat a = animats.get(i);
+                if( !a.alive )
+                    continue;
                 if( a instanceof Sheep) {
-                    if( Util.distance(a.pos_x, a.pos_y, marsh_pos_x, marsh_pos_y) <= marsh_radius + a.radius )
+                    if( Util.distance(a.position, marsh_position) <= marsh_radius + a.radius )
                         a.max_vel_scale = 0.25f;
                     else if( a.max_vel_scale < 1 )
                         a.max_vel_scale = 1;
                 }
-                a.control(iteration, this);
+                a.control(iteration, world);
             }
-
-            // let all animats move, then search for and resolve all collisions with the environment
-            for( i = 0; i < size; ++i ) {
+        }
+        
+        public void move( float timestep ) {
+            float dist, radius_diff;
+            for( int i = minIndex; i < maxIndex; ++i ) {
                 Animat a = animats.get(i);
-                a.move();
+                if( !a.alive )
+                    continue;
+                a.move(timestep);
 
                 // resolve any collisions with the edge of the world
-                dist = (float) Math.sqrt( ( a.pos_x * a.pos_x ) + ( a.pos_y * a.pos_y ) );
+                dist = a.position.getLength();
                 if( dist + a.radius - radius >= 0 ) {
                     radius_diff = ( radius - a.radius - 1 ) / dist;
-                    a.pos_x *= radius_diff;
-                    a.pos_y *= radius_diff;
+                    a.position.scale( radius_diff );
                     a.collideWithWorld();
                 }
             }
-            
-            // look for and resolve any collisions between animats
+        }
+        
+        public void checkForCollisions() {
+            int minSq = minIndex * minIndex, maxSq = (maxIndex - 1) * (maxIndex - 1), minI = , maxI, minJ, maxJ;
+            int i, j, size = animats.size();
+            float dist, radius_diff;
+            Vector2f diff = new Vector2f();
             for( i = 0; i < size; ++i ) {
                 Animat a = animats.get(i);
                 if( a.decomposed )
@@ -74,19 +154,13 @@ public class World {
                     if( i == j || b.decomposed )
                         continue;
 
-                    diff_x = a.pos_x - b.pos_x;
-                    diff_y = a.pos_y - b.pos_y;
-                    dist = (float) Math.sqrt( ( diff_x * diff_x ) + ( diff_y * diff_y ) );
+                    diff.set( a.position.getX() - b.position.getX(), a.position.getY() - b.position.getY() );
+                    dist = diff.getLength();
                     radius_diff = ( a.radius + b.radius + 1 ) - dist;
                     if( radius_diff > 0 ) {
-                        radius_diff /= dist;
-                        diff_x *= radius_diff;
-                        diff_y *= radius_diff;
-                        
-                        a.pos_x += diff_x/2;
-                        a.pos_y += diff_y/2;
-                        b.pos_x -= diff_x/2;
-                        b.pos_y -= diff_y/2;
+                        diff.scale( radius_diff / dist / 2 );
+                        a.position.addEquals( diff );
+                        b.position.subtractEquals( diff );
 
                         a.collideWithAnimat(b);
                         b.collideWithAnimat(a);

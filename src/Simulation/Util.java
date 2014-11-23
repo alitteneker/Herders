@@ -1,11 +1,38 @@
 package Simulation;
 
 public class Util {
+    public static float distanceSquared( float x, float y) {
+        return x * x + y * y;
+    }
     public static float distance( float x, float y ) {
         return sqrt( x * x + y * y );
     }
+    public static float distanceSquared( float x1, float y1, float x2, float y2 ) {
+        return distanceSquared( x1-x2, y1-y2 );
+    }
     public static float distance( float x1, float y1, float x2, float y2 ) {
         return distance( x1-x2, y1-y2 );
+    }
+    public static float distance( Vector2f a, Vector2f b) {
+        return distance( a.getX(), a.getY(), b.getX(), b.getY() );
+    }
+    public static float distanceSquared( Vector2f a, Vector2f b ) {
+        return distanceSquared( a.getX(), a.getY(), b.getX(), b.getY() );
+    }
+    public static float distance( float[] point ) {
+        float sum = 0;
+        for( int i = 0; i < point.length; ++i )
+            sum += point[i] * point[i];
+        return sqrt(sum);
+    }
+    public static float[] minMaxLength( float[] point, float min, float max ) {
+        float dist = distance( point );
+        if( dist >= min && dist <= max )
+            return point;
+        float scale = ( dist > max ? max : min ) / dist;
+        for( int i = 0; i < point.length; ++i )
+            point[i] *= scale;
+        return point;
     }
     public static float dotProduct( float[] a, float[] b ) {
         float ret = 0;
@@ -45,5 +72,17 @@ public class Util {
     }
     public static float[] cartesianToPolar(float x, float y) {
         return new float[] { distance(x, y), atan2(x, y) };
+    }
+    public static String getString(float[] data) {
+        return join(" ",data);
+    }
+    public static String join( String separator, float[] data) {
+        String ret = "";
+        for( int i = 0; i < data.length; ++i ) {
+            if( i > 0 )
+                ret += separator;
+            ret += data[i];
+        }
+        return ret;
     }
 }
