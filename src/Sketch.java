@@ -4,7 +4,7 @@ public class Sketch extends PApplet {
 
     private static final long serialVersionUID = 1L;
     Simulation.Simulation sim;
-    public float scale = 0.6f, trX = 0, trY = 0;
+    public float scale = 0.6f, trX = 0, trY = -150;
     public void setup() {
         size(1000,1000);
         noLoop();
@@ -14,11 +14,16 @@ public class Sketch extends PApplet {
 
     public void draw() {
         pushMatrix();
+        preTransform();
+        Simulation.Simulation.draw();
+        popMatrix();
+        Simulation.Simulation.drawMetadata();
+    }
+    
+    public void preTransform() {
         translate(500, 500);
         scale(scale);
         translate(trX, trY);
-        Simulation.Simulation.draw();
-        popMatrix();
     }
     
     public void keyPressed() {
@@ -37,6 +42,5 @@ public class Sketch extends PApplet {
             scale *= dscale;
         else if( key == '-' )
             scale /= dscale;
-        redraw();
     }
 }

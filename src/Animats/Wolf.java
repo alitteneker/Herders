@@ -87,6 +87,10 @@ public class Wolf extends Animat {
         return WolfNeuralNetwork.getWeightCount();
     }
     public float getFitness( int end_iteration ) {
-        return ( ( (float)death_time/(float)end_iteration ) + ( energy / max_energy ) ) / 2f;
+        return ( ( ((float)(alive ? end_iteration : death_time)) / ((float)end_iteration) ) + ( energy / max_energy ) ) / 2f;
+    }
+    public void draw() {
+        if( alive )
+            super.draw();
     }
 }

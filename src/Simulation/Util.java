@@ -58,6 +58,13 @@ public class Util {
     public static float abs(float a) {
         return a < 0 ? -a : a;
     }
+    public static float square( float val ) {
+        return val*val;
+    }
+    public static int round(float val) {
+        float r = val % 1;
+        return (int)(r >= 0.5f ? val - r + 1 : val - r);
+    }
     public static float sqrt(float val) {
         return (float)Math.sqrt(val);
     }

@@ -1,7 +1,7 @@
 package Simulation;
 
 public class Vector2f {
-    public volatile float x, y;
+    public float x, y;
     public Vector2f() {
         set(0,0);
     }
@@ -11,10 +11,10 @@ public class Vector2f {
     public Vector2f(Vector2f set) {
         set(set);
     }
-    public float getX() {
+    public synchronized float getX() {
         return x;
     }
-    public float getY() {
+    public synchronized float getY() {
         return y;
     }
     public float getLength() {
@@ -23,15 +23,14 @@ public class Vector2f {
     public float getLengthSquared() {
         return Util.distanceSquared(x, y);
     }
-    public void set(float x, float y) {
+    public synchronized void set(float x, float y) {
         this.x = x;
         this.y = y;
     }
     public void set(Vector2f set) {
-        this.x = set.getX();
-        this.y = set.getY();
+        set( set.getX(), set.getY() );
     }
-    public void scale( float scale ) {
+    public synchronized void scale( float scale ) {
         x *= scale;
         y *= scale;
     }

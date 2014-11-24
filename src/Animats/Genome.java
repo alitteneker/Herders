@@ -63,16 +63,18 @@ public class Genome {
             }
         }
         // record max fitness genome, and max and avg fitness genome level
-        Simulation.Simulation.printlnToLog(
-                Simulation.Simulation.count_rounds
-                + " " + ( allwolves ? "Wolves" : "Sheep" )
-                + " " + ( sum_fit /= (float)len )
-                + " " + max_fit
-                + " " + Util.getString( animats.get(max_ind).genome.data ) );
-        for( i = 0; i < len; ++i ) {
-            prog = fitness[i] /= sum_fit;
-            fitness[i] += sum_fit_going;
-            sum_fit_going += prog;
+        if( sum_fit > 0 ) {
+            Simulation.Simulation.printlnToLog(
+                    Simulation.Simulation.count_rounds
+                    + " " + ( allwolves ? "Wolves" : "Sheep" )
+                    + " " + ( sum_fit /= (float)len )
+                    + " " + max_fit
+                    + " " + Util.getString( animats.get(max_ind).genome.data ) );
+            for( i = 0; i < len; ++i ) {
+                prog = fitness[i] /= sum_fit;
+                fitness[i] += sum_fit_going;
+                sum_fit_going += prog;
+            }
         }
         for( i = 0; i < len; ++i ) {
             inda = indb = getWeightedIndex(fitness);

@@ -31,6 +31,9 @@ public class Simulation {
     public static void draw() {
         world.draw();
     }
+    public static void drawMetadata() {
+        world.drawMetadata();
+    }
     public static ArrayList<Animat> seedWolves(int count) {
         ArrayList<Animat> ret = new ArrayList<Animat>();
         int gene_count = Wolf.getWeightCount();

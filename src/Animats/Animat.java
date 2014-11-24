@@ -31,6 +31,8 @@ public abstract class Animat {
         position.addEquals(velocity, timestep);
     }
     public synchronized void draw() {
+        if( decomposed )
+            return;
         float px = position.getX(), py = position.getY(),
                 max_vel = getMaxVelocity(), sca = max_vel != 0 ? radius / max_vel : 0,
                 vx = velocity.getX() * sca, vy = velocity.getY() * sca;

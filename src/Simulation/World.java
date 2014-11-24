@@ -14,6 +14,7 @@ public class World {
     public Vector2f marsh_position = new Vector2f( 0, 250 ), wolfstart = new Vector2f(-250, 0), sheepstart = new Vector2f(250, 0);
     public int iteration, num_active, num_alive;
     public float timestep;
+    public float fps = 0;
     public int thread_UID = 0;
 
     public World( PApplet applet ) {
@@ -35,7 +36,7 @@ public class World {
         int len = animats.size();
         for( int i = 0; i < len; ++i ) {
             Animat a = animats.get(i);
-            if( wolves && a instanceof Wolf )
+            if( wolves == a instanceof Wolf )
                 ret.add(a);
         }
         return ret;
@@ -66,9 +67,8 @@ public class World {
                 if( i < num_alive - 1 )
                     --num_alive;
             }
-            else if( !a.alive && i < num_alive - 1 ) {
+            else if( !a.alive && i < num_alive - 1 )
                 animats.add( --num_alive, animats.remove( i-- ) );
-            }
         }
 
         for ( i = 0; i < processors; ++i )
@@ -97,20 +97,22 @@ public class World {
     public void runThreads() {
         final int processors = Runtime.getRuntime().availableProcessors();
         ThreadGroup tg = new ThreadGroup( "ThreadSplitters" + thread_UID++ );
+        float PROC_SCALE = 1f;
+        int TIMEOUT = 5;
         
         for( int mode = 0; mode < ThreadSplitter.NUM_MODES; ++mode ) {
-            ArrayList<ThreadSplitter> threads = prepThreads(mode, processors, tg);
+            ArrayList<ThreadSplitter> threads = prepThreads(mode, (int)Util.max(1, processors * PROC_SCALE), tg);
             for( int i = 0; i < threads.size(); ) {
                 if( tg.activeCount() < processors ) {
                     ThreadSplitter th = threads.get( i++ );
                     th.start();
                 }
                 else
-                    try { Thread.sleep(100); }
+                    try { Thread.sleep(TIMEOUT); }
                         catch (InterruptedException e) { e.printStackTrace(); }
             }
             while( tg.activeCount() > 0 ) {
-                try { Thread.sleep(100); } 
+                try { Thread.sleep(TIMEOUT); } 
                     catch (InterruptedException e) { e.printStackTrace(); }
             }
         }
@@ -125,13 +127,21 @@ public class World {
         while( bothStillAlive() ) {
             iteration++;
             runThreads();
-            if( (System.currentTimeMillis() - timer) > 35) {
+            if( (System.currentTimeMillis() - timer) > 40) {
                 applet.redraw();
-                System.out.println("Iteratons "+last_iter_update+"-"+iteration+" took "+(System.currentTimeMillis()-timer)+"ms");
+                timer = System.currentTimeMillis() - timer;
+                System.out.println("Iteratons "+last_iter_update+"-"+iteration+" took "+timer+"ms");
+                fps = (float)( iteration - last_iter_update ) / ( (float)timer / 1000f );
                 last_iter_update = iteration;
                 timer = System.currentTimeMillis();
             }
         }
+    }
+    
+    public void drawMetadata() {
+        applet.textSize(32);
+        applet.fill(19,155,209);
+        applet.text("IPS: "+fps,35,35);
     }
     
     public void draw() {
@@ -242,9 +252,10 @@ public class World {
                         return;
 
                     diff.set( a.position.getX() - b.position.getX(), a.position.getY() - b.position.getY() );
-                    dist = diff.getLength();
-                    radius_diff = ( a.radius + b.radius + 1 ) - dist;
-                    if( radius_diff > 0 ) {
+                    dist = diff.getLengthSquared();
+                    if( Util.square( a.radius + b.radius + 1 ) - dist > 0 ) {
+                        dist = Util.sqrt(dist);
+                        radius_diff = a.radius + b.radius + 1 - dist;
                         diff.scale( radius_diff / dist / 2 );
                         a.position.addEquals( diff );
                         b.position.subtractEquals( diff );
