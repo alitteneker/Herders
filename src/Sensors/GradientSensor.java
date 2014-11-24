@@ -8,12 +8,12 @@ import Simulation.World;
 
 public class GradientSensor extends Sensor {
 
-    int num_results = 4;
-    int type;
+    public int type;
     public static final int TYPE_SHEEP = 1, TYPE_WOLVES = 2, TYPE_OBSTACLES = 3, TYPE_MARSH = 4, TYPE_CARCASS = 5;
 
     public GradientSensor(int type) {
         super();
+        num_results = 4;
         this.type = type;
     }
     public float[] sense(Animat ind, World world) {

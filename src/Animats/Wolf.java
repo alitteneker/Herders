@@ -5,7 +5,6 @@ import Simulation.World;
 
 public class Wolf extends Animat {
 
-    float radius = 5;
     public float energy = 5000;
     WolfNeuralNetwork NN;
     
@@ -23,6 +22,8 @@ public class Wolf extends Animat {
 
     public Wolf( Genome gnome ) {
         super( gnome );
+        radius = 5;
+        color = applet.color(170, 143, 57);
     }
     public void initFromGenome() {
         NN = new WolfNeuralNetwork(this, genome);
@@ -51,8 +52,10 @@ public class Wolf extends Animat {
             max_vel_scale *= d_scale_vel_over_max_energy;
         }
         if( energy <= 0 ) {
+            energy = 0;
             alive = decomposed = false;
             death_time = iteration;
+            System.out.println("Wolf death!");
         }
         else
             acceleration.setMaxLength(max_accel);
@@ -79,6 +82,9 @@ public class Wolf extends Animat {
 
     public float[] getGenomeData() {
         return NN.getGenomeData();
+    }
+    public static int getWeightCount() {
+        return WolfNeuralNetwork.getWeightCount();
     }
     public float getFitness( int end_iteration ) {
         return ( ( (float)death_time/(float)end_iteration ) + ( energy / max_energy ) ) / 2f;

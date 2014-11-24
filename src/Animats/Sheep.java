@@ -5,7 +5,6 @@ import Simulation.World;
 
 public class Sheep extends Animat {
     
-    float radius = 1;
     float energy = 100;
     float cohesion_weight, separation_weight, alignment_weight, avoidance_weight;
     float cohesion_distance = 50, separation_distance = 50, alignment_distance = 50, avoidance_distance = 50;
@@ -14,11 +13,16 @@ public class Sheep extends Animat {
 
     public Sheep( Genome gnome ) {
         super( gnome );
+        radius = 1;
+        color = applet.color(54, 51, 119);
     }
 
     public void collideWithAnimat(Animat other) {
-        if( other instanceof Wolf )
+        if( other instanceof Wolf ) {
             alive = false;
+            color = applet.color(42, 78, 110);
+            System.out.println("Sheep death!");
+        }
         velocity.set(0, 0);
     }
 
@@ -39,8 +43,11 @@ public class Sheep extends Animat {
                     ++cohesion_count;
                 }
                 if( dist <= separation_distance ) {
-                    separation.addEquals( ( position.getX() - a.position.getX() ) / ( dist * dist ),
-                            ( position.getY() - a.position.getY() ) / ( dist * dist ) );
+                    if( dist == 0 )
+                        System.out.println("Huh?");
+                    else
+                        separation.addEquals( ( position.getX() - a.position.getX() ) / ( dist * dist ),
+                                ( position.getY() - a.position.getY() ) / ( dist * dist ) );
                     ++separation_count;
                 }
                 if( dist <= alignment_distance ) {
@@ -83,6 +90,8 @@ public class Sheep extends Animat {
             acceleration.addEquals( avoidance );
         }
         
+        if( Util.isNaN(acceleration.getX()))
+            System.out.println("WTF!!");
         acceleration.setMaxLength( max_acceleration );
     }
     
@@ -91,7 +100,7 @@ public class Sheep extends Animat {
         super.move( timestep );
     }
     
-    public float biteTakenOut(float requested) {
+    public synchronized float biteTakenOut(float requested) {
         float ret = 0;
         if( !alive && !decomposed ) {
             if( energy < requested ) {
@@ -107,9 +116,8 @@ public class Sheep extends Animat {
         return ret;
     }
 
-    public float[] getGenomeData() {
-        // TODO
-        return null;
+    public static int getWeightCount() {
+        return 4;
     }
 
     public void initFromGenome() {

@@ -1,6 +1,9 @@
 package Simulation;
 
 public class Util {
+    public static boolean isNaN(float val) {
+        return val != val;
+    }
     public static float distanceSquared( float x, float y) {
         return x * x + y * y;
     }

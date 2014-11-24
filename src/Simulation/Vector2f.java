@@ -8,6 +8,9 @@ public class Vector2f {
     public Vector2f(float x, float y) {
         set(x, y);
     }
+    public Vector2f(Vector2f set) {
+        set(set);
+    }
     public float getX() {
         return x;
     }
@@ -24,6 +27,10 @@ public class Vector2f {
         this.x = x;
         this.y = y;
     }
+    public void set(Vector2f set) {
+        this.x = set.getX();
+        this.y = set.getY();
+    }
     public void scale( float scale ) {
         x *= scale;
         y *= scale;
@@ -37,7 +44,7 @@ public class Vector2f {
     public void setMaxLength( float max ) {
         float len = getLength();
         if( len > max )
-            scale( len / max );
+            scale( max / len );
     }
     public void addEquals( float x, float y ) {
         set( this.x + x, this.y + y );

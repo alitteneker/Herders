@@ -8,8 +8,8 @@ import Simulation.World;
 
 public class WolfNeuralNetwork {
     // all wolves share the same sensors
+    public static int num_sensor_vals;
     static Sensor[] sensors = makeSensors();
-    static int num_sensor_vals = 0;
     public static Sensor[] makeSensors() {
         Sensor[] ret = new Sensor[7];
 
@@ -32,12 +32,12 @@ public class WolfNeuralNetwork {
     public float[][] weights_level_2;
     public float[] motors;
     public static final float node_threshold = 0.5f;
-    int num_hidden_nodes = 20;
+    public static final int num_hidden_nodes = 20, num_motors = 3;
     Wolf parent;
 
     public WolfNeuralNetwork(Wolf par, Genome gnome) {
         parent = par;
-        motors = new float[3];
+        motors = new float[num_motors];
         setWeightsFromGenome( gnome );
     }
     public void calculate( World world ) {
@@ -58,7 +58,7 @@ public class WolfNeuralNetwork {
         }
         
         // calculate motors from hidden
-        if( motors.length != weights_level_2.length )
+        if( num_motors != weights_level_2.length )
             return;
         for( i = 0; i < weights_level_2.length; ++i ) {
             motors[i] = 0;
@@ -69,19 +69,18 @@ public class WolfNeuralNetwork {
         }
     }
     
-    public int getWeightCount() {
-        return num_hidden_nodes * ( num_sensor_vals + motors.length );
+    public static int getWeightCount() {
+        return num_hidden_nodes * ( num_sensor_vals + num_motors );
     }
 
-    public void setWeightsFromGenome( Genome gnome ) {
-        int thresh = num_hidden_nodes * num_sensor_vals;
+    public void setWeightsFromGenome( Genome gnome ) {        int thresh = num_hidden_nodes * num_sensor_vals;
         weights_level_1 = new float[num_hidden_nodes][num_sensor_vals];
-        weights_level_2 = new float[motors.length][num_hidden_nodes];
+        weights_level_2 = new float[num_motors][num_hidden_nodes];
         for( int i = 0; i < gnome.data.length; ++i ) {
             if( i < thresh )
-                weights_level_1[ i / num_hidden_nodes ][ i % num_hidden_nodes ] = gnome.data[i];
+                weights_level_1[ i / num_sensor_vals ][ i % num_sensor_vals ] = gnome.data[i];
             else
-                weights_level_2[ ( i - thresh ) / motors.length ][ ( i - thresh ) % motors.length ] = gnome.data[i];
+                weights_level_2[ ( i - thresh ) / num_hidden_nodes ][ ( i - thresh ) % num_hidden_nodes ] = gnome.data[i];
         }
     }
 

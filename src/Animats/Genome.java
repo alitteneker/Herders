@@ -7,13 +7,11 @@ import Simulation.Util;
 
 public class Genome {
     public float[] data;
-    public static final float MUTATION_RANGE = 0.2f;
+    public static final float MUTATION_RANGE = 0.05f;
+    public static float last_avg_fitness = 0;
 
     public Genome(float[] data) {
         this.data = data;
-    }
-    public Genome(Animat orig) {
-        data = orig.getGenomeData();
     }
     public Genome cross(Genome other) {
         return cross(this, other);
@@ -68,7 +66,7 @@ public class Genome {
         Simulation.Simulation.printlnToLog(
                 Simulation.Simulation.count_rounds
                 + " " + ( allwolves ? "Wolves" : "Sheep" )
-                + " " + ( sum_fit / (float)len )
+                + " " + ( sum_fit /= (float)len )
                 + " " + max_fit
                 + " " + Util.getString( animats.get(max_ind).genome.data ) );
         for( i = 0; i < len; ++i ) {
@@ -82,6 +80,7 @@ public class Genome {
                 indb = getWeightedIndex(fitness);
             ret.add( cross( animats.get(inda), animats.get(indb) ) );
         }
+        last_avg_fitness = sum_fit;
         return ret;
     }
     public static int getWeightedIndex(float[] fitness) {
