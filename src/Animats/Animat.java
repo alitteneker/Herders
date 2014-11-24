@@ -36,9 +36,10 @@ public abstract class Animat {
                 vx = velocity.getX() * sca, vy = velocity.getY() * sca;
         applet.ellipseMode(PApplet.RADIUS);
         applet.fill(color);
-        applet.ellipse(500 + position.getX(), 500 + position.getY(), radius, radius);
+        applet.noStroke();
+        applet.ellipse(position.getX(), position.getY(), radius, radius);
         applet.stroke(0f);
-        applet.line(500 + px, 500 + py, 500 + px + vx, 500 + py + vy);
+        applet.line(px, py, px + vx, py + vy);
     }
     public void collideWithWorld() {
         velocity.set( 0, 0 );

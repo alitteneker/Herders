@@ -141,11 +141,11 @@ public class World {
 
         // draw range of world
         applet.fill(255);
-        applet.ellipse(500, 500, radius, radius);
+        applet.ellipse(0, 0, radius, radius);
         
         // draw marsh
         applet.fill(170, 123, 57);
-        applet.ellipse(500+marsh_position.getX(), 500+marsh_position.getY(), marsh_radius, marsh_radius);
+        applet.ellipse(marsh_position.getX(), marsh_position.getY(), marsh_radius, marsh_radius);
         
         // draw animats
         int size = animats.size();
