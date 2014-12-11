@@ -28,6 +28,12 @@ public class Util {
             sum += point[i] * point[i];
         return sqrt(sum);
     }
+    public static int minMax(int val, int min, int max) {
+        return ( val > max ) ? max : ( ( val < min ) ? min : val );
+    }
+    public static float minMax(float val, float min, float max) {
+        return ( val > max ) ? max : ( ( val < min ) ? min : val );
+    }
     public static float[] minMaxLength( float[] point, float min, float max ) {
         float dist = distance( point );
         if( dist >= min && dist <= max )

@@ -25,15 +25,17 @@ public class Genome {
     public static Genome[] cross(Genome a, Genome b, int num_children) {
         if( num_children <= 0 )
             return null;
-        int c,i, len = Math.min(a.data.length, b.data.length);
+        int c, i, len = Math.min(a.data.length, b.data.length);
         float[] child = new float[len];
+        float min, range, drift;
         Genome[] children = new Genome[num_children];
         Random gen = new Random();
         for( c = 0; c < num_children; ++c ) {
             for( i = 0; i < len; ++i ) {
-                child[i] =
-                        ( Util.min(a.data[i],b.data[i]) + ( gen.nextFloat() * Util.abs(a.data[i] - b.data[i]) ) )
-                        * ( 1.0f + ( ((float)gen.nextGaussian()) * MUTATION_RANGE ) );
+                min = Util.min( a.data[i], b.data[i] );
+                range = Util.abs( a.data[i] - b.data[i] );
+                drift = Util.max(range * MUTATION_RANGE, MUTATION_RANGE);
+                child[i] = min + range*gen.nextFloat() + drift*((float)gen.nextGaussian());
             }
             children[c] = new Genome(child);
         }
@@ -67,11 +69,12 @@ public class Genome {
             Simulation.Simulation.printlnToLog(
                     Simulation.Simulation.count_rounds
                     + " " + ( allwolves ? "Wolves" : "Sheep" )
-                    + " " + ( sum_fit /= (float)len )
+                    + " " + ( sum_fit / (float)len )
                     + " " + max_fit
                     + " " + Util.getString( animats.get(max_ind).genome.data ) );
             for( i = 0; i < len; ++i ) {
-                prog = fitness[i] /= sum_fit;
+                fitness[i] /= sum_fit;
+                prog = fitness[i];
                 fitness[i] += sum_fit_going;
                 sum_fit_going += prog;
             }
@@ -82,7 +85,7 @@ public class Genome {
                 indb = getWeightedIndex(fitness);
             ret.add( cross( animats.get(inda), animats.get(indb) ) );
         }
-        last_avg_fitness = sum_fit;
+        last_avg_fitness = sum_fit/(float)len;
         return ret;
     }
     public static int getWeightedIndex(float[] fitness) {

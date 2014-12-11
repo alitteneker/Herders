@@ -130,7 +130,6 @@ public class World {
             if( (System.currentTimeMillis() - timer) > 40) {
                 applet.redraw();
                 timer = System.currentTimeMillis() - timer;
-                System.out.println("Iteratons "+last_iter_update+"-"+iteration+" took "+timer+"ms");
                 fps = (float)( iteration - last_iter_update ) / ( (float)timer / 1000f );
                 last_iter_update = iteration;
                 timer = System.currentTimeMillis();

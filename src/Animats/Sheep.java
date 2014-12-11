@@ -9,7 +9,7 @@ public class Sheep extends Animat {
     float cohesion_weight, separation_weight, alignment_weight, avoidance_weight;
     float cohesion_distance = 50, separation_distance = 50, alignment_distance = 50, avoidance_distance = 50;
     float max_acceleration = 2;
-    static final float vel_friction = 0.04f;
+    static final float vel_friction = 0.04f, repulsion_scale = 0.1f;
 
     public Sheep( Genome gnome ) {
         super( gnome );
@@ -21,7 +21,6 @@ public class Sheep extends Animat {
         if( other instanceof Wolf ) {
             alive = false;
             color = applet.color(42, 78, 110);
-            System.out.println("Sheep death!");
         }
         velocity.set(0, 0);
     }
@@ -39,15 +38,14 @@ public class Sheep extends Animat {
             dist = Util.distanceSquared( position, a.position );
             if( a instanceof Sheep ) {
                 if( dist <= cohesion_distance ) {
-                    cohesion.addEquals(a.position);
+                    float div = Util.square( Util.sqrt(dist) - repulsion_scale );
+                    cohesion.addEquals( ( a.position.getX() - position.getX() ) / div,
+                            ( a.position.getY() - position.getY() ) / div );
                     ++cohesion_count;
                 }
                 if( dist <= separation_distance ) {
-                    if( dist == 0 )
-                        System.out.println("Huh?");
-                    else
-                        separation.addEquals( ( position.getX() - a.position.getX() ) / ( dist * dist ),
-                                ( position.getY() - a.position.getY() ) / ( dist * dist ) );
+                    separation.addEquals( ( position.getX() - a.position.getX() ) / dist,
+                            ( position.getY() - a.position.getY() ) / dist );
                     ++separation_count;
                 }
                 if( dist <= alignment_distance ) {
@@ -55,12 +53,10 @@ public class Sheep extends Animat {
                     ++alignment_count;
                 }
             }
-            else {
-                if( dist <= avoidance_distance ) {
-                    avoidance.addEquals( ( position.getX() - a.position.getX() ) / ( dist * dist ),
-                            ( position.getY() - a.position.getY() ) / ( dist * dist ) );
-                    ++avoidance_count;
-                }
+            else if( dist <= avoidance_distance ) {
+                avoidance.addEquals( ( position.getX() - a.position.getX() ) / dist,
+                        ( position.getY() - a.position.getY() ) / dist);
+                ++avoidance_count;
             }
         }
         dist = world.radius - position.getLength();
@@ -70,9 +66,7 @@ public class Sheep extends Animat {
         }
         
         if( cohesion_count > 0 ) {
-            cohesion.scale( 1 / (float)cohesion_count );
-            cohesion.subtractEquals( position );
-            cohesion.scale( cohesion_weight );
+            cohesion.scale( cohesion_weight / (float)cohesion_count );
             acceleration.addEquals( cohesion );
         }
         if( separation_count > 0 ) {
@@ -90,8 +84,6 @@ public class Sheep extends Animat {
             acceleration.addEquals( avoidance );
         }
         
-        if( Util.isNaN(acceleration.getX()))
-            System.out.println("WTF!!");
         acceleration.setMaxLength( max_acceleration );
     }
     
@@ -121,10 +113,16 @@ public class Sheep extends Animat {
     }
 
     public void initFromGenome() {
-        cohesion_weight = genome.data[0];
+        cohesion_weight   = genome.data[0];
         separation_weight = genome.data[1];
-        alignment_weight = genome.data[2];
-        avoidance_weight = genome.data[3];
+        alignment_weight  = genome.data[2];
+        avoidance_weight  = genome.data[3];
+    }
+    
+    public void reinitialize() {
+        alive = true;
+        decomposed = false;
+        energy = 100;
     }
 
     public float getFitness( int end_iteration ) {

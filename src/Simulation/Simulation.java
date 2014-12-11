@@ -49,17 +49,12 @@ public class Simulation {
     }
     public static ArrayList<Animat> seedSheep(int count) {
         ArrayList<Animat> ret = new ArrayList<Animat>();
-        int gene_count = Sheep.getWeightCount();
         Random gen = new Random();
         for( int i = 0; i < count; ++i ) {
-            float[] data = new float[gene_count];
-            for( int j = 0; j < data.length; ++j ) {
-                if( j == 2 )
-                    data[j] = 0.9f + ( ( gen.nextFloat()-0.5f ) * 0.1f );
-                else
-                    data[j] = gen.nextFloat();
-            }
-            ret.add(new Sheep(new Genome(data)));
+            float[] data = new float[]{ 0.7f, 0.8f, 0,8f, 0.9f };
+            for( int j = 0; j < data.length; ++j )
+                data[j] += 0.05f * Util.minMax((float)gen.nextGaussian(), -1f, 1f);
+            ret.add( new Sheep( new Genome(data) ) );
         }
         return ret;
     }
@@ -79,28 +74,39 @@ public class Simulation {
             super(group, name);
         }
         public void run() {
+            boolean evolve_sheep = false;
             float wolf_fitness = 0;
             
+            long timer = System.currentTimeMillis();
             while( wolf_fitness < 0.5f ) {
                 ++count_rounds;
                 world.run();
                 
                 // cross the existing population, weighted by fitness
-                ArrayList<Animat> sheep = Genome.cross(world.getExisting(false), world.iteration);
-                ArrayList<Animat> wolves = Genome.cross(world.getExisting(true), world.iteration);
+                reproducePopulations(world, evolve_sheep);
                 wolf_fitness = Genome.last_avg_fitness;
                 System.out.println( "Round " + count_rounds
                         + " wolf fitness is " + wolf_fitness
-                        + " after " + world.iteration + " iterations." );
-                if( wolf_fitness >= 0.5f ) {
+                        + " after " + ( System.currentTimeMillis()-timer ) + "ms and " + world.iteration + " iterations." );
+                if( wolf_fitness >= 0.5f )
                     break;
-                }
-                world.animats.clear();
-                world.addAnimats(sheep);
-                world.addAnimats(wolves);
+                timer = System.currentTimeMillis();
             }
 
             applet.exit();
+        }
+        public void reproducePopulations(World world, boolean evolve_sheep) {
+            ArrayList<Animat> sheep = world.getExisting(false);
+            if( evolve_sheep )
+                sheep = Genome.cross( sheep, world.iteration );
+            else {
+                for( int i = 0; i < sheep.size(); ++i )
+                    ((Sheep)sheep.get(i)).reinitialize();
+            }
+            ArrayList<Animat> wolves = Genome.cross( world.getExisting(true),  world.iteration );
+            world.animats.clear();
+            world.addAnimats(wolves);
+            world.addAnimats(sheep);
         }
     }
 }

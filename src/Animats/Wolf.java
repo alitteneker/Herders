@@ -9,15 +9,16 @@ public class Wolf extends Animat {
     WolfNeuralNetwork NN;
     
     // CONSTANTS
-    public static final float max_accel         = 2;
-    public static final float d_kill_energy     = -5;
-    public static final float d_eat_energy      = 10;
-    public static final float d_bad_bite_energy = -5;
-    public static final float d_idle_energy     = -2;
-    public static final float d_accel_energy    = -1;
-    public static final float eat_motor_thresh  = 1;
-    public static final float min_eat_dist      = 10;
-    public static final float max_energy        = 10000;
+    public static final float max_accel          = 2;
+    public static final float d_kill_energy      = -2;
+    public static final float d_eat_energy       = 10;
+    public static final float d_bad_bite_energy  = -5;
+    public static final float d_collision_energy = -1;
+    public static final float d_idle_energy      = -2;
+    public static final float d_accel_energy     = -1;
+    public static final float eat_motor_thresh   = 1;
+    public static final float min_eat_dist       = 10;
+    public static final float max_energy         = 10000;
     public static final float d_scale_vel_over_max_energy = 0.8f;
 
     public Wolf( Genome gnome ) {
@@ -31,7 +32,12 @@ public class Wolf extends Animat {
     public void collideWithAnimat(Animat other) {
         if( other instanceof Sheep )
             energy += d_kill_energy;
+        energy += d_collision_energy;
         velocity.set(0, 0);
+    }
+    public void collideWithWorld() {
+        super.collideWithWorld();
+        energy += d_collision_energy;
     }
     public void control( int iteration, World world ) {
         if( !alive )
@@ -55,7 +61,6 @@ public class Wolf extends Animat {
             energy = 0;
             alive = decomposed = false;
             death_time = iteration;
-            System.out.println("Wolf death!");
         }
         else
             acceleration.setMaxLength(max_accel);
