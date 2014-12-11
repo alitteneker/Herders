@@ -27,15 +27,16 @@ public class Genome {
             return null;
         int c, i, len = Math.min(a.data.length, b.data.length);
         float[] child = new float[len];
-        float min, range, drift;
+        float min, range, between, drift;
         Genome[] children = new Genome[num_children];
         Random gen = new Random();
         for( c = 0; c < num_children; ++c ) {
+            between = gen.nextFloat();
             for( i = 0; i < len; ++i ) {
                 min = Util.min( a.data[i], b.data[i] );
                 range = Util.abs( a.data[i] - b.data[i] );
-                drift = Util.max(range * MUTATION_RANGE, MUTATION_RANGE);
-                child[i] = min + range*gen.nextFloat() + drift*((float)gen.nextGaussian());
+                drift = Util.max( range * MUTATION_RANGE, MUTATION_RANGE );
+                child[i] = min + range*between + drift*((float)gen.nextGaussian());
             }
             children[c] = new Genome(child);
         }

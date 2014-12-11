@@ -5,20 +5,20 @@ import Simulation.World;
 
 public class Wolf extends Animat {
 
-    public float energy = 5000;
+    public float energy = 1000;
     WolfNeuralNetwork NN;
     
     // CONSTANTS
-    public static final float max_accel          = 2;
-    public static final float d_kill_energy      = -2;
-    public static final float d_eat_energy       = 10;
-    public static final float d_bad_bite_energy  = -5;
-    public static final float d_collision_energy = -1;
-    public static final float d_idle_energy      = -2;
-    public static final float d_accel_energy     = -1;
-    public static final float eat_motor_thresh   = 1;
-    public static final float min_eat_dist       = 10;
-    public static final float max_energy         = 10000;
+    public static final float max_accel          = 2.0f;
+    public static final float d_kill_energy      = -2.0f;
+    public static final float d_eat_energy       = 10.0f;
+    public static final float d_bad_bite_energy  = -5.0f;
+    public static final float d_collision_energy = -3.0f;
+    public static final float d_idle_energy      = -0.5f;
+    public static final float d_accel_energy     = -0.1f;
+    public static final float eat_motor_thresh   = 1.0f;
+    public static final float min_eat_dist       = 10.0f;
+    public static final float max_energy         = 2000.0f;
     public static final float d_scale_vel_over_max_energy = 0.8f;
 
     public Wolf( Genome gnome ) {
@@ -32,7 +32,8 @@ public class Wolf extends Animat {
     public void collideWithAnimat(Animat other) {
         if( other instanceof Sheep )
             energy += d_kill_energy;
-        energy += d_collision_energy;
+        else
+            energy += d_collision_energy;
         velocity.set(0, 0);
     }
     public void collideWithWorld() {
@@ -92,7 +93,9 @@ public class Wolf extends Animat {
         return WolfNeuralNetwork.getWeightCount();
     }
     public float getFitness( int end_iteration ) {
-        return ( ( ((float)(alive ? end_iteration : death_time)) / ((float)end_iteration) ) + ( energy / max_energy ) ) / 2f;
+        float ret = alive ? end_iteration : death_time;
+        ret += ( energy / max_energy ) * end_iteration;
+        return ret;
     }
     public void draw() {
         if( alive )

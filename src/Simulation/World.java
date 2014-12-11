@@ -10,7 +10,7 @@ public class World {
     PApplet applet;
 
     public ArrayList<Animat> animats = new ArrayList<Animat>();
-    public float radius = 500, marsh_radius = 25;
+    public float radius = 500, marsh_radius = 75;
     public Vector2f marsh_position = new Vector2f( 0, 250 ), wolfstart = new Vector2f(-250, 0), sheepstart = new Vector2f(250, 0);
     public int iteration, num_active, num_alive;
     public float timestep;
@@ -36,7 +36,7 @@ public class World {
         int len = animats.size();
         for( int i = 0; i < len; ++i ) {
             Animat a = animats.get(i);
-            if( wolves == a instanceof Wolf )
+            if( wolves == ( a instanceof Wolf ) )
                 ret.add(a);
         }
         return ret;
@@ -45,7 +45,7 @@ public class World {
         int len = population.size();
         Vector2f start = population.get(0) instanceof Wolf ? wolfstart : sheepstart,
                 curr = new Vector2f();
-        float delta = 2.5f * population.get(0).radius, range = Util.sqrt(len) * delta, limit = start.getX() + ( range / 2 );
+        float delta = 4f * population.get(0).radius, range = Util.sqrt(len) * delta, limit = start.getX() + ( range / 2 );
         curr.set(start.getX() - range/2, start.getY() - range/2);
         for( int i = 0; i < len; ++i ) {
             Animat a = population.get(i);
@@ -157,10 +157,9 @@ public class World {
         applet.ellipse(marsh_position.getX(), marsh_position.getY(), marsh_radius, marsh_radius);
         
         // draw animats
-        int size = animats.size();
-        for( int i = 0; i < size; ++i ) {
+        for( int i = 0; i < animats.size(); ++i ) {
             Animat a = animats.get(i);
-            if( !a.decomposed )
+            if( a != null && !a.decomposed )
                 a.draw();
         }
     }

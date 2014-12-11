@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 
 import Animats.Animat;
@@ -51,7 +52,7 @@ public class Simulation {
         ArrayList<Animat> ret = new ArrayList<Animat>();
         Random gen = new Random();
         for( int i = 0; i < count; ++i ) {
-            float[] data = new float[]{ 0.7f, 0.8f, 0,8f, 0.9f };
+            float[] data = new float[]{ 1f, 1f, 1f, 3f };
             for( int j = 0; j < data.length; ++j )
                 data[j] += 0.05f * Util.minMax((float)gen.nextGaussian(), -1f, 1f);
             ret.add( new Sheep( new Genome(data) ) );
@@ -78,7 +79,7 @@ public class Simulation {
             float wolf_fitness = 0;
             
             long timer = System.currentTimeMillis();
-            while( wolf_fitness < 0.5f ) {
+            while( wolf_fitness < ( world.iteration > 0 ? world.iteration : 1 ) ) {
                 ++count_rounds;
                 world.run();
                 
@@ -87,9 +88,8 @@ public class Simulation {
                 wolf_fitness = Genome.last_avg_fitness;
                 System.out.println( "Round " + count_rounds
                         + " wolf fitness is " + wolf_fitness
-                        + " after " + ( System.currentTimeMillis()-timer ) + "ms and " + world.iteration + " iterations." );
-                if( wolf_fitness >= 0.5f )
-                    break;
+                        + " after " + ( System.currentTimeMillis()-timer )
+                        + "ms and " + world.iteration + " iterations." );
                 timer = System.currentTimeMillis();
             }
 
@@ -103,10 +103,19 @@ public class Simulation {
                 for( int i = 0; i < sheep.size(); ++i )
                     ((Sheep)sheep.get(i)).reinitialize();
             }
+            
             ArrayList<Animat> wolves = Genome.cross( world.getExisting(true),  world.iteration );
+            
             world.animats.clear();
+            
+            // give each a quick shuffle just to keep things interesting
+            Collections.shuffle(wolves);
+            Collections.shuffle(sheep);
+            
             world.addAnimats(wolves);
             world.addAnimats(sheep);
+            
+            // TODO: output both lists to file
         }
     }
 }

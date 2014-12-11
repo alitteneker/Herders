@@ -38,7 +38,7 @@ public class Sheep extends Animat {
             dist = Util.distanceSquared( position, a.position );
             if( a instanceof Sheep ) {
                 if( dist <= cohesion_distance ) {
-                    float div = Util.square( Util.sqrt(dist) - repulsion_scale );
+                    float div = Util.square( Util.sqrt(dist) + repulsion_scale );
                     cohesion.addEquals( ( a.position.getX() - position.getX() ) / div,
                             ( a.position.getY() - position.getY() ) / div );
                     ++cohesion_count;
@@ -126,6 +126,6 @@ public class Sheep extends Animat {
     }
 
     public float getFitness( int end_iteration ) {
-        return ((float)(alive ? end_iteration : death_time))/((float)end_iteration);
+        return alive ? ((float)end_iteration) : death_time;
     }
 }
