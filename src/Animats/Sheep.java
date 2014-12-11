@@ -8,8 +8,8 @@ public class Sheep extends Animat {
     float energy = 100;
     float cohesion_weight, separation_weight, alignment_weight, avoidance_weight;
     float cohesion_distance = 50, separation_distance = 50, alignment_distance = 50, avoidance_distance = 50;
-    float max_acceleration = 2;
-    static final float vel_friction = 0.04f, repulsion_scale = 0.1f;
+    float max_vel = 2;
+    static final float vel_friction = 0.0f, repulsion_scale = 0.5f;
 
     public Sheep( Genome gnome ) {
         super( gnome );
@@ -26,7 +26,7 @@ public class Sheep extends Animat {
     }
 
     public void control( int iteration, World world ) {
-        acceleration.set( 0, 0 );
+        Vector2f vel = new Vector2f( 0, 0 );
         Vector2f cohesion = new Vector2f(), separation = new Vector2f(), alignment = new Vector2f(), avoidance = new Vector2f();
         int cohesion_count = 0, separation_count = 0, alignment_count = 0, avoidance_count = 0;
         int len = world.animats.size();
@@ -67,24 +67,26 @@ public class Sheep extends Animat {
         
         if( cohesion_count > 0 ) {
             cohesion.scale( cohesion_weight / (float)cohesion_count );
-            acceleration.addEquals( cohesion );
+            vel.addEquals( cohesion );
         }
         if( separation_count > 0 ) {
             separation.scale( separation_weight / (float)separation_count );
-            acceleration.addEquals( separation );
+            vel.addEquals( separation );
         }
         if( alignment_count > 0 ) {
             alignment.scale( 1 / (float)alignment_count );
             alignment.subtractEquals( velocity );
             alignment.scale( alignment_weight );
-            acceleration.addEquals(alignment);
+            vel.addEquals(alignment);
         }
         if( avoidance_count > 0 ) {
             avoidance.scale( avoidance_weight / (float)avoidance_count );
-            acceleration.addEquals( avoidance );
+            vel.addEquals( avoidance );
         }
         
-        acceleration.setMaxLength( max_acceleration );
+        vel.setMaxLength( max_vel );
+        acceleration.set( -velocity.getX(), -velocity.getY() );
+        acceleration.addEquals(vel);
     }
     
     public void move( float timestep ) {

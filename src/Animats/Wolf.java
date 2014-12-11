@@ -5,7 +5,7 @@ import Simulation.World;
 
 public class Wolf extends Animat {
 
-    public float energy = 1000;
+    public float energy = 2000;
     WolfNeuralNetwork NN;
     
     // CONSTANTS
@@ -13,12 +13,13 @@ public class Wolf extends Animat {
     public static final float d_kill_energy      = -2.0f;
     public static final float d_eat_energy       = 10.0f;
     public static final float d_bad_bite_energy  = -5.0f;
-    public static final float d_collision_energy = -3.0f;
     public static final float d_idle_energy      = -0.5f;
     public static final float d_accel_energy     = -0.1f;
     public static final float eat_motor_thresh   = 1.0f;
     public static final float min_eat_dist       = 10.0f;
-    public static final float max_energy         = 2000.0f;
+    public static final float max_energy         = 4000.0f;
+    public static final float d_world_collision_energy  = -3.0f;
+    public static final float d_animat_collision_energy = -1.0f;
     public static final float d_scale_vel_over_max_energy = 0.8f;
 
     public Wolf( Genome gnome ) {
@@ -33,12 +34,12 @@ public class Wolf extends Animat {
         if( other instanceof Sheep )
             energy += d_kill_energy;
         else
-            energy += d_collision_energy;
+            energy += d_animat_collision_energy;
         velocity.set(0, 0);
     }
     public void collideWithWorld() {
         super.collideWithWorld();
-        energy += d_collision_energy;
+        energy += d_world_collision_energy;
     }
     public void control( int iteration, World world ) {
         if( !alive )
@@ -49,6 +50,7 @@ public class Wolf extends Animat {
         float eat_motor = NN.getMotorEat();
         
         float d_energy = d_idle_energy;
+        acceleration.setMaxLength(max_accel);
         d_energy += acceleration.getLength() * d_accel_energy;
         if( eat_motor >= eat_motor_thresh )
             d_energy += takeBite( world );
@@ -63,8 +65,6 @@ public class Wolf extends Animat {
             alive = decomposed = false;
             death_time = iteration;
         }
-        else
-            acceleration.setMaxLength(max_accel);
     }
 
     public float takeBite( World world ) {

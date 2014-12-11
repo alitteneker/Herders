@@ -45,7 +45,7 @@ public class World {
         int len = population.size();
         Vector2f start = population.get(0) instanceof Wolf ? wolfstart : sheepstart,
                 curr = new Vector2f();
-        float delta = 4f * population.get(0).radius, range = Util.sqrt(len) * delta, limit = start.getX() + ( range / 2 );
+        float delta = 3 * population.get(0).radius + 3, range = Util.sqrt(len) * delta, limit = start.getX() + ( range / 2 );
         curr.set(start.getX() - range/2, start.getY() - range/2);
         for( int i = 0; i < len; ++i ) {
             Animat a = population.get(i);

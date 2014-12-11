@@ -21,8 +21,8 @@ public class Simulation {
     public static PApplet applet;
     public void runSimulation( PApplet app ) {
         applet = app;        
-        world = new World(applet);        
-        world.addAnimats(seedWolves(20));
+        world = new World(applet);
+        world.addAnimats(seedWolves(40));
         world.addAnimats(seedSheep(200));
         
         ThreadGroup tg = new ThreadGroup("Simulation");
@@ -38,11 +38,12 @@ public class Simulation {
     public static ArrayList<Animat> seedWolves(int count) {
         ArrayList<Animat> ret = new ArrayList<Animat>();
         int gene_count = Wolf.getWeightCount();
+        float range = 10f;
         Random gen = new Random();
         for( int i = 0; i < count; ++i) {
             float[] data = new float[gene_count];
             for( int j = 0; j < data.length; ++j ) {
-                data[j] = gen.nextFloat() * 2 - 1;
+                data[j] = range * ( gen.nextFloat() * 2 - 1 );
             }
             ret.add(new Wolf(new Genome(data)));
         }

@@ -31,7 +31,7 @@ public class WolfNeuralNetwork {
     public float[][] weights_level_1;
     public float[][] weights_level_2;
     public float[] motors;
-    public static final float node_threshold = 0.5f;
+    public static final float node_threshold = 0.01f;
     public static final int num_hidden_nodes = 20, num_motors = 3;
     Wolf parent;
 
