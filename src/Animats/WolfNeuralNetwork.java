@@ -32,7 +32,7 @@ public class WolfNeuralNetwork {
     public float[][] weights_level_2;
     public float[] motors;
     public static final float node_threshold = 0.01f;
-    public static final int num_hidden_nodes = 20, num_motors = 3;
+    public static final int num_hidden_nodes = 19, num_motors = 3;
     Wolf parent;
 
     public WolfNeuralNetwork(Wolf par, Genome gnome) {
@@ -52,8 +52,9 @@ public class WolfNeuralNetwork {
             if( sensor_data.length != weights_level_1[i].length )
                 return;
             for( j = 0; j < weights_level_1[i].length; ++j )
-                hidden[i] += weights_level_1[i][j] * sensor_data[j];
-            if( hidden[i] < node_threshold )
+                if( weights_level_1[i][j] != 0 )
+                    hidden[i] += weights_level_1[i][j] * sensor_data[j];
+            if( Math.abs(hidden[i]) < node_threshold )
                 hidden[i] = 0;
         }
         
@@ -65,7 +66,8 @@ public class WolfNeuralNetwork {
             if( num_hidden_nodes != weights_level_2[i].length )
                 return;
             for( j = 0; j < weights_level_2[i].length; ++j )
-                motors[i] += weights_level_2[i][j] * hidden[j];
+                if( weights_level_2[i][j] != 0 )
+                    motors[i] += weights_level_2[i][j] * hidden[j];
         }
     }
     

@@ -5,13 +5,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Random;
 
 import Animats.Animat;
 import Animats.Genome;
 import Animats.Sheep;
 import Animats.Wolf;
+import Animats.WolfNeuralNetwork;
 import processing.core.PApplet;
 
 public class Simulation {
@@ -19,14 +19,16 @@ public class Simulation {
     public static String log_location = "simulation.txt";
     public static World world;
     public static PApplet applet;
+    public static SimulationThread th;
+    
     public void runSimulation( PApplet app ) {
         applet = app;        
         world = new World(applet);
-        world.addAnimats(seedWolves(40));
-        world.addAnimats(seedSheep(200));
+        world.addAnimats(seedWolves(20));
+        world.addAnimats(seedSheep(400));
         
-        ThreadGroup tg = new ThreadGroup("Simulation");
-        SimulationThread th = new SimulationThread(tg, "Sim");
+        final ThreadGroup tg = new ThreadGroup("Simulation");
+        th = new SimulationThread(this, tg, "Sim");
         th.start();
     }
     public static void draw() {
@@ -37,15 +39,50 @@ public class Simulation {
     }
     public static ArrayList<Animat> seedWolves(int count) {
         ArrayList<Animat> ret = new ArrayList<Animat>();
-        int gene_count = Wolf.getWeightCount();
-        float range = 10f;
+        int gene_count = Wolf.getWeightCount(),
+            sensor_count = WolfNeuralNetwork.num_sensor_vals,
+            hidden_count = WolfNeuralNetwork.num_hidden_nodes;
+        final float range = 0.25f;
         Random gen = new Random();
         for( int i = 0; i < count; ++i) {
             float[] data = new float[gene_count];
-            for( int j = 0; j < data.length; ++j ) {
-                data[j] = range * ( gen.nextFloat() * 2 - 1 );
+            
+            // seed the hidden node weights
+            for( int j = 0; j < 7; ++j ) {
+                if( j < 5 ) {
+                    int index = j * ( 3 * sensor_count + 4 );
+                    data[ index ]                    = -1;
+                    data[ index + 1 ]                = 1;
+                    data[ index + sensor_count + 2 ] = -1;
+                    data[ index + sensor_count + 3 ] = 1;
+                    data[ index + ( 2 * sensor_count ) ]     = 0.25f;
+                    data[ index + ( 2 * sensor_count ) + 1 ] = 0.25f;
+                    data[ index + ( 2 * sensor_count ) + 2 ] = 0.25f;
+                    data[ index + ( 2 * sensor_count ) + 3 ] = 0.25f;
+                }
+                else if(j == 5) {
+                    data[ j * 4 + 15 * sensor_count     ] = 1;
+                    data[ j * 4 + 16 * sensor_count + 1 ] = 1;
+                    data[ j * 4 + 17 * sensor_count     ] = 0.5f;
+                    data[ j * 4 + 17 * sensor_count + 1 ] = 0.5f;
+                }
+                else {
+                    data[ 18 * sensor_count ] = 1;
+                }
             }
-            ret.add(new Wolf(new Genome(data)));
+            int offset = sensor_count * hidden_count;
+            // sheep, wolves, obstacles, marsh, carcass, velocity
+            float[] guess = new float[] { 5, -2f, 1, 2f, 4, 0 };
+            for( int j = 0; j < hidden_count; ++j ) {
+                int type = j == 18 ? 2 : j % 3, 
+                    index = j + ( type * hidden_count ) + offset;
+                if( type == 2 )
+                    data[index] = j/3 == 4 ? 10 : 0;
+                else
+                    data[index] = guess[j/3];
+                data[ index ] += range * ( gen.nextFloat() * 2 - 1 );
+            }
+            ret.add( new Wolf( new Genome(data) ) );
         }
         return ret;
     }
@@ -53,7 +90,7 @@ public class Simulation {
         ArrayList<Animat> ret = new ArrayList<Animat>();
         Random gen = new Random();
         for( int i = 0; i < count; ++i ) {
-            float[] data = new float[]{ 1f, 1f, 1f, 3f };
+            float[] data = new float[]{ 50f, 20f, 1f, 100f };
             for( int j = 0; j < data.length; ++j )
                 data[j] += 0.05f * Util.minMax((float)gen.nextGaussian(), -1f, 1f);
             ret.add( new Sheep( new Genome(data) ) );
@@ -70,53 +107,5 @@ public class Simulation {
             return false;
         }
         return true;
-    }
-    class SimulationThread extends Thread {
-        public SimulationThread(ThreadGroup group, String name) {
-            super(group, name);
-        }
-        public void run() {
-            boolean evolve_sheep = false;
-            float wolf_fitness = 0;
-            
-            long timer = System.currentTimeMillis();
-            while( wolf_fitness < ( world.iteration > 0 ? world.iteration : 1 ) ) {
-                ++count_rounds;
-                world.run();
-                
-                // cross the existing population, weighted by fitness
-                reproducePopulations(world, evolve_sheep);
-                wolf_fitness = Genome.last_avg_fitness;
-                System.out.println( "Round " + count_rounds
-                        + " wolf fitness is " + wolf_fitness
-                        + " after " + ( System.currentTimeMillis()-timer )
-                        + "ms and " + world.iteration + " iterations." );
-                timer = System.currentTimeMillis();
-            }
-
-            applet.exit();
-        }
-        public void reproducePopulations(World world, boolean evolve_sheep) {
-            ArrayList<Animat> sheep = world.getExisting(false);
-            if( evolve_sheep )
-                sheep = Genome.cross( sheep, world.iteration );
-            else {
-                for( int i = 0; i < sheep.size(); ++i )
-                    ((Sheep)sheep.get(i)).reinitialize();
-            }
-            
-            ArrayList<Animat> wolves = Genome.cross( world.getExisting(true),  world.iteration );
-            
-            world.animats.clear();
-            
-            // give each a quick shuffle just to keep things interesting
-            Collections.shuffle(wolves);
-            Collections.shuffle(sheep);
-            
-            world.addAnimats(wolves);
-            world.addAnimats(sheep);
-            
-            // TODO: output both lists to file
-        }
     }
 }

@@ -34,8 +34,18 @@ public class Vector2f {
         x *= scale;
         y *= scale;
     }
+    public Vector2f getScaled( float scale ) {
+        Vector2f ret = new Vector2f(this);
+        ret.scale(scale);
+        return ret;
+    }
     public void normalize() {
         setLength(1);
+    }
+    public Vector2f getNormalized() {
+        Vector2f ret = new Vector2f(this);
+        ret.normalize();
+        return ret;
     }
     public void setLength( float length ) {
         scale( length / getLength() );

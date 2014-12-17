@@ -8,10 +8,12 @@ public class Wolf extends Animat {
     public float energy = 2000;
     WolfNeuralNetwork NN;
     
+    final float friction_scale = 0.05f;
+    
     // CONSTANTS
     public static final float max_accel          = 2.0f;
     public static final float d_kill_energy      = -2.0f;
-    public static final float d_eat_energy       = 10.0f;
+    public static final float d_eat_energy       = 1.0f;
     public static final float d_bad_bite_energy  = -5.0f;
     public static final float d_idle_energy      = -0.5f;
     public static final float d_accel_energy     = -0.1f;
@@ -80,10 +82,17 @@ public class Wolf extends Animat {
                 prey = (Sheep)check;
             }
         }
-        if( prey != null )
+        if( prey != null ) {
             return prey.biteTakenOut(d_eat_energy);
-        else
+        }
+        else {
             return d_bad_bite_energy;
+        }
+    }
+    
+    public void move( float timestep ) {
+        velocity.scale( ( 1 - friction_scale ) * timestep );
+        super.move( timestep );
     }
 
     public float[] getGenomeData() {

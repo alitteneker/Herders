@@ -37,8 +37,8 @@ public abstract class Animat {
                 max_vel = getMaxVelocity(), sca = max_vel != 0 ? radius / max_vel : 0,
                 vx = velocity.getX() * sca, vy = velocity.getY() * sca;
         applet.ellipseMode(PApplet.RADIUS);
-        applet.fill(color);
         applet.noStroke();
+        applet.fill(color);
         applet.ellipse(position.getX(), position.getY(), radius, radius);
         applet.stroke(0f);
         applet.line(px, py, px + vx, py + vy);

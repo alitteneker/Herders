@@ -7,7 +7,7 @@ import Simulation.Util;
 
 public class Genome {
     public float[] data;
-    public static final float MUTATION_RANGE = 0.05f;
+    public static final float MUTATION_RANGE = 0.005f;
     public static float last_avg_fitness = 0;
 
     public Genome(float[] data) {

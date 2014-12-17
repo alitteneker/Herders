@@ -1,5 +1,4 @@
 package Animats;
-import Simulation.Util;
 import Simulation.Vector2f;
 import Simulation.World;
 
@@ -7,9 +6,9 @@ public class Sheep extends Animat {
     
     float energy = 100;
     float cohesion_weight, separation_weight, alignment_weight, avoidance_weight;
-    float cohesion_distance = 50, separation_distance = 50, alignment_distance = 50, avoidance_distance = 50;
-    float max_vel = 2;
-    static final float vel_friction = 0.0f, repulsion_scale = 0.5f;
+    final float cohesion_distance = 250, separation_distance = 10, alignment_distance = 50, avoidance_distance = 50;
+    final float max_vel = 2;
+    final float vel_friction = 0.05f, repulsion_factor = 100f;
 
     public Sheep( Genome gnome ) {
         super( gnome );
@@ -26,8 +25,11 @@ public class Sheep extends Animat {
     }
 
     public void control( int iteration, World world ) {
-        Vector2f vel = new Vector2f( 0, 0 );
-        Vector2f cohesion = new Vector2f(), separation = new Vector2f(), alignment = new Vector2f(), avoidance = new Vector2f();
+        acceleration.set(0, 0);
+        Vector2f cohesion = new Vector2f(),
+                separation = new Vector2f(),
+                alignment = new Vector2f(),
+                avoidance = new Vector2f();
         int cohesion_count = 0, separation_count = 0, alignment_count = 0, avoidance_count = 0;
         int len = world.animats.size();
         float dist;
@@ -35,17 +37,16 @@ public class Sheep extends Animat {
             Animat a = world.animats.get(i);
             if( this.equals(a) || a.decomposed )
                 continue;
-            dist = Util.distanceSquared( position, a.position );
+            Vector2f direction = a.position.subtract(position);
+            dist = direction.getLength();
+            direction.normalize();
             if( a instanceof Sheep ) {
                 if( dist <= cohesion_distance ) {
-                    float div = Util.square( Util.sqrt(dist) + repulsion_scale );
-                    cohesion.addEquals( ( a.position.getX() - position.getX() ) / div,
-                            ( a.position.getY() - position.getY() ) / div );
+                    cohesion.addEquals( direction.getScaled( 1f / ( dist + repulsion_factor ) ) );
                     ++cohesion_count;
                 }
                 if( dist <= separation_distance ) {
-                    separation.addEquals( ( position.getX() - a.position.getX() ) / dist,
-                            ( position.getY() - a.position.getY() ) / dist );
+                    separation.addEquals( direction.getScaled(-1f/dist) );
                     ++separation_count;
                 }
                 if( dist <= alignment_distance ) {
@@ -54,39 +55,36 @@ public class Sheep extends Animat {
                 }
             }
             else if( dist <= avoidance_distance ) {
-                avoidance.addEquals( ( position.getX() - a.position.getX() ) / dist,
-                        ( position.getY() - a.position.getY() ) / dist);
+                avoidance.addEquals(direction.getScaled(-1f/dist));
                 ++avoidance_count;
             }
         }
         dist = world.radius - position.getLength();
         if( dist <= avoidance_distance ) {
-            avoidance.subtractEquals( position, 1 / ( dist * dist ) );
+            avoidance.addEquals( position.getNormalized(), -1f/dist );
             ++avoidance_count;
         }
         
         if( cohesion_count > 0 ) {
             cohesion.scale( cohesion_weight / (float)cohesion_count );
-            vel.addEquals( cohesion );
+            acceleration.addEquals( cohesion );
         }
         if( separation_count > 0 ) {
             separation.scale( separation_weight / (float)separation_count );
-            vel.addEquals( separation );
+            acceleration.addEquals( separation );
         }
         if( alignment_count > 0 ) {
             alignment.scale( 1 / (float)alignment_count );
             alignment.subtractEquals( velocity );
             alignment.scale( alignment_weight );
-            vel.addEquals(alignment);
+            acceleration.addEquals(alignment);
         }
         if( avoidance_count > 0 ) {
             avoidance.scale( avoidance_weight / (float)avoidance_count );
-            vel.addEquals( avoidance );
+            acceleration.addEquals( avoidance );
         }
         
-        vel.setMaxLength( max_vel );
-        acceleration.set( -velocity.getX(), -velocity.getY() );
-        acceleration.addEquals(vel);
+        acceleration.setMaxLength( max_vel );
     }
     
     public void move( float timestep ) {

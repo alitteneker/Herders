@@ -16,6 +16,9 @@ public class World {
     public float timestep;
     public float fps = 0;
     public int thread_UID = 0;
+    
+    // mark this as false for kill on next iterations
+    public volatile boolean keep_going = true;
 
     public World( PApplet applet ) {
         this.applet = applet;
@@ -124,7 +127,7 @@ public class World {
         long timer = System.currentTimeMillis();
         int last_iter_update = 0;
 
-        while( bothStillAlive() ) {
+        while( bothStillAlive() && keep_going ) {
             iteration++;
             runThreads();
             if( (System.currentTimeMillis() - timer) > 40) {
@@ -153,7 +156,7 @@ public class World {
         applet.ellipse(0, 0, radius, radius);
         
         // draw marsh
-        applet.fill(170, 123, 57);
+        applet.fill(245, 201, 152);
         applet.ellipse(marsh_position.getX(), marsh_position.getY(), marsh_radius, marsh_radius);
         
         // draw animats
