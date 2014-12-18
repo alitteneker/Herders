@@ -7,8 +7,8 @@ import Simulation.Util;
 
 public class Genome {
     public float[] data;
-    public static final float MUTATION_RANGE = 0.005f;
-    public static float last_avg_fitness = 0;
+    public static final float MUTATION_RANGE = 0.01f;
+    public static float last_avg_fitness = 0, last_max_fitness = 0, last_stdev_fitness = 0;
 
     public Genome(float[] data) {
         this.data = data;
@@ -36,7 +36,7 @@ public class Genome {
                 min = Util.min( a.data[i], b.data[i] );
                 range = Util.abs( a.data[i] - b.data[i] );
                 drift = Util.max( range * MUTATION_RANGE, MUTATION_RANGE );
-                child[i] = min + range*between + drift*((float)gen.nextGaussian());
+                child[i] = min + range*between + drift*( 2f * gen.nextFloat() - 1f );
             }
             children[c] = new Genome(child);
         }
@@ -67,18 +67,28 @@ public class Genome {
         }
         // record max fitness genome, and max and avg fitness genome level
         if( sum_fit > 0 ) {
-            Simulation.Simulation.printlnToLog(
-                    Simulation.Simulation.count_rounds
-                    + " " + ( allwolves ? "Wolves" : "Sheep" )
-                    + " " + ( sum_fit / (float)len )
-                    + " " + max_fit
-                    + " " + Util.getString( animats.get(max_ind).genome.data ) );
+            float stdev_fit = 0;
+            float avg_fit = sum_fit/(float)len;
             for( i = 0; i < len; ++i ) {
+                stdev_fit += Util.square( fitness[i] - avg_fit );
+
                 fitness[i] /= sum_fit;
                 prog = fitness[i];
                 fitness[i] += sum_fit_going;
                 sum_fit_going += prog;
             }
+            stdev_fit = Util.sqrt(stdev_fit/(float)len);
+            
+            last_max_fitness = max_fit;
+            last_avg_fitness = avg_fit;
+            last_stdev_fitness = stdev_fit;
+            
+            Simulation.Simulation.printlnToLog(
+                    Simulation.Simulation.count_rounds
+                    + " " + ( allwolves ? "Wolves" : "Sheep" )
+                    + " " + last_avg_fitness
+                    + " " + last_max_fitness
+                    + " " + Util.getString( animats.get(max_ind).genome.data ) );
         }
         for( i = 0; i < len; ++i ) {
             inda = indb = getWeightedIndex(fitness);
@@ -86,7 +96,6 @@ public class Genome {
                 indb = getWeightedIndex(fitness);
             ret.add( cross( animats.get(inda), animats.get(indb) ) );
         }
-        last_avg_fitness = sum_fit/(float)len;
         return ret;
     }
     public static int getWeightedIndex(float[] fitness) {

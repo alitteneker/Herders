@@ -12,16 +12,19 @@ public class World {
     public ArrayList<Animat> animats = new ArrayList<Animat>();
     public float radius = 500, marsh_radius = 75;
     public Vector2f marsh_position = new Vector2f( 0, 250 ), wolfstart = new Vector2f(-250, 0), sheepstart = new Vector2f(250, 0);
-    public int iteration, num_active, num_alive;
-    public float timestep;
+    public volatile int iteration, num_active, num_alive;
+    public volatile float timestep;
     public float fps = 0;
     public int thread_UID = 0;
+    public ArrayList<ThreadSplitter> threads;
     
     // mark this as false for kill on next iterations
     public volatile boolean keep_going = true;
+    public volatile int phase_control = -1;
 
     public World( PApplet applet ) {
         this.applet = applet;
+        threads = new ArrayList<ThreadSplitter>();
     }
     public boolean bothStillAlive() {
         int retW = 0, retS = 0;
@@ -59,29 +62,42 @@ public class World {
             animats.add(a);
         }
     }
-    public ArrayList<ThreadSplitter> prepThreads(int mode, int processors, ThreadGroup tg) {
-        ArrayList<ThreadSplitter> threads = new ArrayList<ThreadSplitter>();
-        int i;
-        for( i = 0; i < num_active; ++i ) {
+    public void startThreads() {
+        for( int i = 0; i < threads.size(); ++i )
+            threads.get(i).kill = true;
+        threads.clear();
+                
+        ThreadGroup tg = new ThreadGroup("ThreadSplitters_" + (thread_UID++));
+        final int processors = Math.max( 1, Math.round( 1f * Runtime.getRuntime().availableProcessors() ) );
+        
+        for( int i = 0; i < processors; ++i ) {
+            ThreadSplitter th = new ThreadSplitter( this, tg, "TS_"+thread_UID+"_"+i);
+            threads.add(th);
+            th.start();
+        }
+    }
+    public void updateThreadLimits() {
+        for( int i = 0; i < num_active; ++i ) {
             Animat a = animats.get(i);
             if( a.decomposed ) {
-                animats.add(animats.remove(i--));
+                animats.remove(a);
+                animats.add(a);
                 --num_active;
                 if( i < num_alive - 1 )
                     --num_alive;
+                --i;
             }
-            else if( !a.alive && i < num_alive - 1 )
-                animats.add( --num_alive, animats.remove( i-- ) );
+            else if( !a.alive && i < num_alive - 1 ) {
+                animats.remove(a);
+                animats.add( --num_alive, a );
+                --i;
+            }
         }
-
-        for ( i = 0; i < processors; ++i )
-            threads.add( new ThreadSplitter( mode, this, tg, "TS_"+thread_UID+"_"+i) );
-        
         int thread_size = threads.size(),
-                total_collision_checks = num_active * ( num_active - 1 ) / 2,
-                each_alive = num_alive / thread_size,
-                each_coll_check = total_collision_checks / thread_size;
-        for( i = 0; i < thread_size; ++i ) {
+            total_collision_checks = num_active * ( num_active - 1 ) / 2,
+            each_alive = num_alive / thread_size,
+            each_coll_check = total_collision_checks / thread_size;
+        for( int i = 0; i < thread_size; ++i ) {
             ThreadSplitter t = threads.get(i);
             t.minAlive = i * each_alive;
             t.minViable = i * each_coll_check;
@@ -94,31 +110,27 @@ public class World {
                 t.checkViable = each_coll_check;
             }
         }
-        
-        return threads;
     }
-    public void runThreads() {
-        final int processors = Runtime.getRuntime().availableProcessors();
-        ThreadGroup tg = new ThreadGroup( "ThreadSplitters" + thread_UID++ );
-        float PROC_SCALE = 1f;
-        int TIMEOUT = 5;
-        
+    public void runLogicThreads() {
+        updateThreadLimits();
+        ++iteration;
+
+        final int thread_size = threads.size();
         for( int mode = 0; mode < ThreadSplitter.NUM_MODES; ++mode ) {
-            ArrayList<ThreadSplitter> threads = prepThreads(mode, (int)Util.max(1, processors * PROC_SCALE), tg);
-            for( int i = 0; i < threads.size(); ) {
-                if( tg.activeCount() < processors ) {
-                    ThreadSplitter th = threads.get( i++ );
-                    th.start();
+            phase_control = mode;
+            
+            int active_count = 1;
+            while( active_count > 0 ) {
+                try { Thread.sleep(1); } catch (InterruptedException e) { e.printStackTrace(); };
+                active_count = 0;
+                for( int ind = 0; ind < thread_size; ++ind ) {
+                    ThreadSplitter th = threads.get(ind);
+                    if( th.sim_mode == mode && th.iteration == iteration )
+                        ++active_count;
                 }
-                else
-                    try { Thread.sleep(TIMEOUT); }
-                        catch (InterruptedException e) { e.printStackTrace(); }
-            }
-            while( tg.activeCount() > 0 ) {
-                try { Thread.sleep(TIMEOUT); } 
-                    catch (InterruptedException e) { e.printStackTrace(); }
             }
         }
+        phase_control = -1;
     }
     public void run() {
         iteration = 0;
@@ -127,9 +139,11 @@ public class World {
         long timer = System.currentTimeMillis();
         int last_iter_update = 0;
 
+        startThreads();
         while( bothStillAlive() && keep_going ) {
-            iteration++;
-            runThreads();
+            
+            runLogicThreads();
+            
             if( (System.currentTimeMillis() - timer) > 40) {
                 applet.redraw();
                 timer = System.currentTimeMillis() - timer;
@@ -170,21 +184,35 @@ public class World {
     class ThreadSplitter extends Thread {
         World world;
         static final int MODE_CONTROL = 0, MODE_MOVE = 1, MODE_COLLIDE = 2, NUM_MODES = 3;
-        int sim_mode;
+        int sim_mode = 0;
         int minAlive, maxAlive, minViable, checkViable;
+        int iteration = 1;
+        boolean kill = false;
         
-        public ThreadSplitter(int mode, World world, ThreadGroup group, String name) {
+        public ThreadSplitter(World world, ThreadGroup group, String name) {
             super( group, name );
-            this.sim_mode = mode;
             this.world = world;
         }
         public void run() {
-            if( sim_mode == MODE_CONTROL )
-                control( world.iteration, world.timestep );
-            if( sim_mode == MODE_MOVE )
-                move( world.timestep );
-            if( sim_mode == MODE_COLLIDE )
-                checkForCollisions();
+            while( world.keep_going && !kill ) {
+                if( world.iteration < this.iteration || world.phase_control < sim_mode ) {
+                    try { Thread.sleep(1); } catch (InterruptedException e) { e.printStackTrace(); };
+                    continue;
+                }
+                    
+                if( sim_mode == MODE_CONTROL )
+                    control( world.iteration, world.timestep );
+                if( sim_mode == MODE_MOVE )
+                    move( world.timestep );
+                if( sim_mode == MODE_COLLIDE )
+                    checkForCollisions();
+                
+                ++sim_mode;
+                if( sim_mode == NUM_MODES ) {
+                    sim_mode = 0;
+                    ++iteration;
+                }
+            }
         }
         
         public void control( int iteration, float timestep ) {
@@ -244,7 +272,7 @@ public class World {
                     continue;
                 
                 for( j = setJ ? i + 1 : j; j < world.num_active; ++j ) {
-                    
+
                     Animat b = animats.get(j);
                     if( b.decomposed  || ( !a.alive && !b.alive ) )
                         continue;

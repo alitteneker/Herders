@@ -38,9 +38,9 @@ public class GradientSensor extends Sensor {
             }
         }
         else if( type == TYPE_OBSTACLES )
-            ret = Util.distance(x, y) / world.radius;
+            ret = Util.square( Util.distance(x, y) / world.radius );
         else if( type == TYPE_MARSH )
-            ret = Util.invert( 3 + Util.minMax( Util.distance(x, y, world.marsh_position.getX(), world.marsh_position.getY()) - world.marsh_radius, 0, 1000 ) );
+            ret = Util.invert( Util.exp( Util.distance(x, y, world.marsh_position.getX(), world.marsh_position.getY()) ) );
 
         return ret;
     }

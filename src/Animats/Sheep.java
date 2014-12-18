@@ -1,4 +1,5 @@
 package Animats;
+
 import Simulation.Vector2f;
 import Simulation.World;
 
@@ -8,7 +9,7 @@ public class Sheep extends Animat {
     float cohesion_weight, separation_weight, alignment_weight, avoidance_weight;
     final float cohesion_distance = 250, separation_distance = 10, alignment_distance = 50, avoidance_distance = 50;
     final float max_vel = 2;
-    final float vel_friction = 0.05f, repulsion_factor = 100f;
+    final float vel_friction = 0.05f, repulsion_factor = 200f;
 
     public Sheep( Genome gnome ) {
         super( gnome );
@@ -19,7 +20,7 @@ public class Sheep extends Animat {
     public void collideWithAnimat(Animat other) {
         if( other instanceof Wolf ) {
             alive = false;
-            color = applet.color(42, 78, 110);
+            color = applet.color(255, 0, 0);
         }
         velocity.set(0, 0);
     }
@@ -31,8 +32,8 @@ public class Sheep extends Animat {
                 alignment = new Vector2f(),
                 avoidance = new Vector2f();
         int cohesion_count = 0, separation_count = 0, alignment_count = 0, avoidance_count = 0;
-        int len = world.animats.size();
         float dist;
+        int len = world.animats.size();
         for( int i = 0; i < len; ++i ) {
             Animat a = world.animats.get(i);
             if( this.equals(a) || a.decomposed )
@@ -123,6 +124,7 @@ public class Sheep extends Animat {
         alive = true;
         decomposed = false;
         energy = 100;
+        color = applet.color(54, 51, 119);
     }
 
     public float getFitness( int end_iteration ) {

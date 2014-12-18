@@ -50,6 +50,18 @@ public class Util {
             ret += a[i] * b[i];
         return ret;
     }
+    public static float sum(float... vals) {
+        float ret = 0;
+        for( int i = 0; i < vals.length; ++i )
+            ret += vals[i];
+        return ret;
+    }
+    public static float avg(float... vals) {
+        float ret = sum(vals);
+        if( vals.length > 0 )
+            ret /= (float)vals.length;
+        return ret;
+    }
     public static float invert(float val) {
         if( val != 0 )
             val = 1f / val;
@@ -70,6 +82,9 @@ public class Util {
     public static int round(float val) {
         float r = val % 1;
         return (int)(r >= 0.5f ? val - r + 1 : val - r);
+    }
+    public static float exp(float val) {
+        return (float)Math.exp(val);
     }
     public static float sqrt(float val) {
         return (float)Math.sqrt(val);

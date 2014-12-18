@@ -72,7 +72,7 @@ public class Simulation {
             }
             int offset = sensor_count * hidden_count;
             // sheep, wolves, obstacles, marsh, carcass, velocity
-            float[] guess = new float[] { 5, -2f, 1, 2f, 4, 0 };
+            float[] guess = new float[] { 5, -2f, -1, 2f, 5, 0 };
             for( int j = 0; j < hidden_count; ++j ) {
                 int type = j == 18 ? 2 : j % 3, 
                     index = j + ( type * hidden_count ) + offset;
@@ -90,7 +90,7 @@ public class Simulation {
         ArrayList<Animat> ret = new ArrayList<Animat>();
         Random gen = new Random();
         for( int i = 0; i < count; ++i ) {
-            float[] data = new float[]{ 50f, 20f, 1f, 100f };
+            float[] data = new float[]{ 600f, 50f, 10f, 1000f };
             for( int j = 0; j < data.length; ++j )
                 data[j] += 0.05f * Util.minMax((float)gen.nextGaussian(), -1f, 1f);
             ret.add( new Sheep( new Genome(data) ) );

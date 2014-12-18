@@ -28,8 +28,9 @@ public class SimulationThread extends Thread {
             reproducePopulations(Simulation.world, evolve_sheep);
             wolf_fitness = Genome.last_avg_fitness;
             System.out.println( "Round " + Simulation.count_rounds
-                    + " wolf fitness is " + wolf_fitness
-                    + " after " + ( System.currentTimeMillis()-timer )
+                    + " avg wolf fitness is " + wolf_fitness
+                    + " (max " + Genome.last_max_fitness + ", stdev " + Genome.last_stdev_fitness
+                    + ") after " + ( System.currentTimeMillis()-timer )
                     + "ms and " + Simulation.world.iteration + " iterations." );
             timer = System.currentTimeMillis();
         }
